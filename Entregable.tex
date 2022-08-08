@@ -1,0 +1,91 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsfonts, amsmath, amssymb, xfrac, bbm}
+\usepackage{geometry}
+\usepackage{xcolor, graphics, subcaption}
+\usepackage{apacite, natbib}
+\renewcommand{\bibsection}{\section*{Referencias}}
+\geometry{
+left = 3cm, 
+right = 3cm, 
+bottom = 3cm,
+top = 3cm, 
+}
+
+
+\title{\vspace{-1cm} Modelo para determinar coeficiente de participación}
+\author{Jose M. Quintero}
+\date{ }
+
+\begin{document}
+
+\maketitle
+Este documento presenta el marco teórico y metodología para calcular el coeficiente de participación cuando hay incertidumbre sobre los precios. Para esto, el primer paso es introducir la teoría necesaria sobre series de tiempo que justifican el desarrollo metodológico. Específicamente, se introduce la noción de proceso Markoviano y más importante la descomposición a través de la cual se puede caracterizar la serie en estudio.  Luego, se presenta la metodología para proyectar el precio en una ventana de tiempo. Hecho esto, la proyección se compara con la realización del precio. 
+\section{Marco teórico}
+
+Como se mencionó previamente, la metodología propuesta en este documento hace una proyección del precio dentro de una ventana de tiempo. Para hacer la proyección, considere un escenario en donde los precios en el tiempo evolucionan como un proceso Markoviano. Este hecho ha sido bastamente estudiado en la literatura que investiga el comportamiento de los precios. Algunas referencias que muestran este hecho incluyen \citet{Nag20}, \citet{Wets15} y \citet{Ryan73}. En este contexto, la estructura que dan los procesos Markovianos permiten hacer una buena aproximación del comportamiento de la serie en periodos futuros. 
+
+Formalmente, sean $W_{t+1}$ un proceso de choques que no pueden ser anticipados y $X_t$ un proceso de Markov estacionario. La función de transición del proceso $X_t$ se define como 
+\begin{equation}
+    X_{t+1} = \varphi\left(X_t,W_{t+1}\right)
+\end{equation}
+Es decir, el proceso $X_t$ evoluciona en función de la realización del periodo inmediatamente anterior y un choque no anticipado. Adicionalmente, suponemos que en promedio el choque tiene valor esperado 0 pero varianza positiva. Es decir, el choque $W_{t+1}$ es el causante de la incertidumbre del proceso. Nótese que si  $W_{t+1}$ fuera no aleatorio, entonces $X_{t+1}$ estaría completamente determinado por $X_t$, y sería posiblemente predecir $X_{t+1}$ con base en la observación inmediatamente anterior. Bajo este contexto, definimos los precios como un proceso aditivo Markoviano con la siguiente estructura
+\begin{equation}
+    P_{t+1}-P_t=\kappa(X_t,W_{t+1})
+\end{equation}
+luego, el incremento en precios está mediado tanto por el proceso $X_t$ como por los choques no anticipados $W_{t+1}$. A modo de ejemplo, $X_t$ se puede interpretar como condiciones del mercado tales como escases (volumen de producción) y $W_{t+1}$ como eventos aleatorios (e.j clima) que pueden afectar tanto la producción como las expectativas del mercado y por consiguiente el precio. Con base en esto, la serie de precios se puede descomponer en diferentes componentes que permiten entender separar la desviación de la tendencia. Específicamente, la serie de precios se puede descomponer de la forma
+\begin{equation}
+    P_t = \underbrace{t\nu}_{\text{Tendencia}} + \underbrace{\sum_{\ell=0}^t H_\ell - H_\ell^+}_{\text{Martingala}} - \underbrace{\mathbb{E}\left[\kappa(X_t,W_{t+1}\big\vert X_t=x\right]}_{\text{Estacionario}}+\underbrace{P_0+\mathbb{E}\left[\kappa(X_0,W_{1})\big\vert X_0=x\right]}_{\text{Invariante}}
+\end{equation}
+donde $\nu$ es la tendencia y $H_t$ y $H_t^+$ se definen como 
+\begin{align*}
+    H_t &= \sum_{\ell=0}^t \mathbb{E}\left[\kappa(X_{t-1+\ell},W_{t+\ell})-\nu\vert X_t,...,X_0\right] \\ 
+    H_t^+ &= \mathbb{E}\left[H_{t-1}\vert X_{t-1},...,X_0\right]
+\end{align*}
+Notese que la Martingala captura el error de proyección y por tanto se puede interpretar con el efecto de los choques inesperados en el largo plazo sobre la serie de tiempo. Más importante, para largos periodos de tiempo, el comportamiento asintotico de las martingalas está sujeto al teorema del limite central  de \citet{Billingsley61}. El término invariante es un término de ajuste. Más importante que eso, la tendencia $\nu$ es el parametro que será de interes y se define como el valor esperado de la serie con respecto a la distribución estacionaria. En este contexto, la metodología busca explotar la desomposición de la serie de precios para proyectar el precio en una ventana de tiempo y compararlo con el precio observado.
+
+\section{Metodología}
+
+En esta sección se presenta la metodología para proyectar la serie de tiempo y calcular cuál es el ajuste a la comisión que se debe pagar. 
+
+En primer lugar, se define una ventana de tiempo sobre la cuál se va a estudiar la serie de precios. Defina como $\ell$ la longitud de la ventana. Para proyectar el precio en el periodo $t$, el primer paso es calcular la tendencia de la serie dentro de la ventana de tiempo. La forma de hacerlo es calculando el promedio de las primeras diferencias de la serie dentro de la venta
+\begin{equation}
+    \nu = \frac{1}{\ell-1} \sum_{j=1}^{\ell-1}P_{t-j}-P_{t-1-j} 
+\end{equation}
+Luego con la tendencia, se calcula la proyección del precio para el periodo $t$
+\begin{equation}\label{eq:proyeccion}
+    \hat{P}_t = P_{t-\ell} + \nu\times\ell 
+\end{equation}
+La ecuación \eqref{eq:proyeccion} muestra que la proyección del precio es el resultado de la extrapolación de la tendencia por fuera de la ventana de tiempo, sin contar los posibles efectos de choques no anticipados que hacen parte del componente de martingala. Finalmente, las componentes estacionarias e invariantes de la serie están contempladas en el término $P_{t-\ell}$ o el intercepto de la ecuación \eqref{eq:proyeccion}. Finalmente, se calcula el cociente entre la proyeción del precio y el precio observado
+\begin{equation}
+    \alpha = \sfrac{\hat{P}_t}{P_t}
+\end{equation}
+El coeficiente $\alpha$ es un indicador sobre el comportamiento del precio relativo a las tendencias que mostraba el mercado. El porcentaje de participación se calcula según la regla presentada en la Tabla \ref{tab:my_label}
+\begin{table}[hbt]
+    \centering
+    \caption{Porcentaje de participación.}
+    \label{tab:my_label}
+    \begin{tabular}{c|c}\hline\hline
+        $\alpha$ & \%  \\ \hline
+        $<$ 1.00	& 0.60\% \\ 
+        $\leq$ 0,90	& 0.50\% \\ 
+        $\leq$0,80	& 0.40\% \\ 
+ $\leq$0,70	& 0.30\% \\ 
+ $\leq$0,60	& 0.20\% \\ 
+ $\leq$0,50	& 0.10\% \\
+$\geq$ 1,00	& 0.75\% \\ 
+$\geq$1,20	& 1.00\% \\ 
+$\geq$ 1,30	& 1.25\% \\
+$\geq$1,40	& 1.50\% \\
+$\geq$1,50	& 1.75\% \\ 
+$\geq$2,00	& 2.00\%  \\ 
+\hline
+    \end{tabular}
+\end{table}
+
+
+\newpage
+\bibliographystyle{apacite}
+\bibliography{references.bib}
+
+\end{document}
